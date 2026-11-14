@@ -9,14 +9,16 @@ results/<model>/<suite>/<timestamp>/
 
 Runs are never overwritten. `report` uses the latest run of each model and suite.
 
-The generated report lives in `reports/<suite>.md`, next to two plots:
-`<suite>_vs_tokens.png` (score against tokens seen) and `<suite>_vs_params.png`
-(score against non-embedding parameters). Each rebuilt report is archived first:
-`reports/history/<suite>/<generation date>/` keeps the previous markdown and its
-plots, sorted by date, so past evaluations always stay readable. The same charts
-also live in a self-contained interactive version, `reports/<suite>.html` (hover a
-point to see the model, its score and the run date). See [Workflow](workflow.md)
-for when they are rebuilt.
+The report is generated in **two renderings**, from the same runs, both committed:
+
+- `reports/<suite>_private.md` (+ `<suite>_private_vs_tokens.png`, `<suite>_private_vs_params.png`, `<suite>_private.html`) — every registered model, including the mini ones.
+- `reports/<suite>_public.md` (+ `<suite>_public_vs_tokens.png`, `<suite>_public_vs_params.png`, `<suite>_public.html`) — references only, without any mini model.
+
+Each rebuilt report is archived first: `reports/history/<suite>/<generation date>/`
+keeps the previous markdown, plots and HTML, sorted by date, so past evaluations
+always stay readable. The interactive versions (hover a point to see the model, its
+score and the run date) live in `reports/<suite>_private.html` and
+`reports/<suite>_public.html`. See [Workflow](workflow.md) for when they are rebuilt.
 
 ## Tests
 

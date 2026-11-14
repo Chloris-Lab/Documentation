@@ -1,6 +1,6 @@
 # Workflow
 
-Protocol v2 runs on the Linux GPU server only: the package refuses to import on
+Protocol v3 runs on the Linux GPU server only: the package refuses to import on
 macOS, so every command below — `pytest` included — runs on the server, with
 `--device cuda` for anything that scores a model.
 
@@ -11,16 +11,20 @@ macOS, so every command below — `pytest` included — runs on the server, with
 | `list`                         | Shows the registered models and suites                         |
 | `fingerprint MODEL`            | Prints the SHA-256 values to copy into `models.yaml`           |
 | `check MODEL [--device cuda]`  | Batch invariance, device agreement with cpu, untrained control |
-| `run SUITE MODEL... [--all]`   | Evaluates models, saves each run in `results/`, rebuilds report + PNGs |
-| `report SUITE`                 | Rebuilds `reports/<suite>.md` (+ plots, HTML) from existing results |
+| `run SUITE MODEL... [--all]`   | Evaluates models, saves each run in `results/`, rebuilds reports |
+| `report SUITE`                 | Rebuilds `reports/<suite>_private.md` and `reports/<suite>_public.md` (+ plots, HTML) from existing results |
 
-Regular workflow: `run` always rebuilds `reports/<suite>.md` plus the two plots
-(`<suite>_vs_tokens.png`, `<suite>_vs_params.png`) from the latest runs, so a
-benchmark never ends without images. The previous report and its plots are moved to
-`reports/history/<suite>/<generation date>/` — no evaluation replaces an older one —
-and a self-contained HTML version (`reports/<suite>.html`) is written with the same
-charts plus tooltips (hover a point to see model, score and run date). Use
-`--no-report` to skip it, and `report` alone to rebuild from existing results.
+Regular workflow: `run` always rebuilds the two reports from the latest runs, so a
+benchmark never ends without images:
+
+- `reports/<suite>_private.md` (+ `_vs_tokens.png` / `_vs_params.png`, HTML) — every
+  registered model, including the mini 150M;
+- `reports/<suite>_public.md` (+ `_vs_tokens.png` / `_vs_params.png`, HTML) — references
+  only, without any mini model.
+
+The previous report and its plots are moved to
+`reports/history/<suite>/<generation date>/` — no evaluation replaces an older one.
+Use `--no-report` to skip it, and `report` alone to rebuild from existing results.
 
 Useful options for `run`:
 
@@ -35,28 +39,37 @@ Typical sequence:
 
 ```
 uv run mini-eval list
-uv run mini-eval fingerprint mini-llm-40M-35096steps
-uv run mini-eval check mini-llm-40M-35096steps --device cuda
-uv run mini-eval run smoke mini-llm-40M-35096steps pythia-70m-step128 --device cuda
+uv run mini-eval run smoke mini-llm-150M-base pythia-70m-step128 --device cuda
 uv run mini-eval run small_lm --all --device cuda --require-clean
 uv run mini-eval report small_lm
 uv run pytest
 ```
 
+Once the Petal checkpoint exists:
+
+```
+uv run mini-eval fingerprint petal-1-150M
+uv run mini-eval check petal-1-150M --device cuda
+```
+
 ## Adding a model
 
-1. A **reference model**: add an entry with `kind: hf`, the Hub id and a `revision`,
+1. A **reference model**: add an entry with `kind: hf`, the Hub id and a `revision`
+   plus the export selectors (`max_length`, `subfolder`, `trust_remote_code`), `group: references`,
    plus its parameter counts and the tokens it saw. Models run at their native
    context; a `max_length: N` cap is still supported (it is passed to lm-eval and
    recorded in the run metadata) and is only used to keep a model whose native context
    is wider than 8192, the ceiling the suite batch size of 4 is memory-safe at, inside
    that envelope. A gated repository
    (`google/gemma-3-270m`, for example) also needs its license accepted by the account
-   that runs the eval.
-2. One of **your models**: copy the checkpoint into the training repository's
-   `models/` folder (the `tok.json` next to it is used), add an entry with
-   `kind: native` and `checkpoint: <file name>`, run
-   `mini-eval fingerprint NAME`, and paste the two hashes into `models.yaml`.
+   that runs the eval. `subfolder: base` + `trust_remote_code: true` evaluates a
+   base checkpoint shipped under `base/` in an existing repo (e.g.
+   `GautierP/MiniLLM-150M`), without copying weights.
+2. One of **your models**: add an entry with `group: mini`. Either the same HF path
+   as above, or copy the checkpoint into the training repository's `models/` folder
+   with `kind: native`, `checkpoint: <file name>`, run `mini-eval fingerprint NAME`
+   and paste the two hashes into `models.yaml`. Only the Petal 150M is evaluated as a
+   mini model for now.
 
 ## See also
 

@@ -6,9 +6,9 @@ Evaluation of [Mini-LLM](../Mini-LLM/README.md) models against reference models
 repository is separate from the training repository on purpose: it only asks the
 models for probabilities, and `lm-eval` computes the scores.
 
-Source repository: [github.com/Mini-llm-lab/Mini-Eval](https://github.com/Mini-llm-lab/Mini-Eval).
+Source repository: [github.com/Chloris-Lab/Mini-Eval](https://github.com/Chloris-Lab/Mini-Eval).
 
-**Server only.** Protocol v2 numbers are produced on the Linux GPU server (CUDA),
+**Server only.** Protocol v3 numbers are produced on the Linux GPU server (CUDA),
 from a committed tree. The package refuses to import on macOS: there is no local
 path to results, and `uv run pytest` also runs on the server.
 
@@ -50,18 +50,20 @@ produces the probabilities is identified by a commit.
 
 ```
 uv run mini-eval list
-uv run mini-eval fingerprint mini-llm-40M-35096steps
-uv run mini-eval check mini-llm-40M-35096steps --device cuda
-uv run mini-eval run smoke mini-llm-40M-35096steps pythia-70m-step128 --device cuda
+uv run mini-eval run smoke mini-llm-150M-base pythia-70m-step128 --device cuda
 uv run mini-eval run small_lm --all --device cuda --require-clean
 uv run mini-eval report small_lm
 uv run pytest
 ```
 
+The line-up is the four HF references plus **one** mini model (`mini-llm-150M-base`,
+`GautierP/MiniLLM-150M` under `base/`); the Petal 150M entry is uncommented once the
+checkpoint exists. The legacy 34M/40M/70M/150M native models are not evaluated.
+
 See [Workflow](workflow.md) for what each command does, including the regular
-workflow rule: `run` always rebuilds `reports/<suite>.md` plus the two plots
-(`<suite>_vs_tokens.png`, `<suite>_vs_params.png`) from the latest runs, so a
-benchmark never ends without images — previous reports go to
-`reports/history/<suite>/<date>/` and an interactive `reports/<suite>.html` is
-written alongside. Use `--no-report` to skip it, and `report` alone
-to rebuild from existing results.
+workflow rule: `run` always rebuilds **two reports** from the latest runs —
+`reports/<suite>_private.md` (all models) and `reports/<suite>_public.md`
+(references only) — so a benchmark never ends without images; previous reports go to
+`reports/history/<suite>/<date>/` and the interactive `<suite>_private.html` /
+`<suite>_public.html` versions are written alongside. Use `--no-report` to skip it,
+and `report` alone to rebuild from existing results.
