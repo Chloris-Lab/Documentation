@@ -20,7 +20,7 @@
 Chat keys: `Enter` send, `/reset` clear the transcript, `/quit` or `Ctrl+C` exit. The
 transcript is in-memory only, never written to disk. What reaches the model is
 decided by the engine from the model's lineage (single-turn for 1.0, a two-turn
-window for 1.1) — see below; the CLI itself always sends the transcript.
+window for Petal 1) — see below; the CLI itself always sends the transcript.
 
 The format is exactly the training format (see `../Mini-LLM/src/mini_llm/prompt.py` and
 [Mini-LLM architecture](../Mini-LLM/architecture.md#conversation-format)):
@@ -28,7 +28,7 @@ The format is exactly the training format (see `../Mini-LLM/src/mini_llm/prompt.
 - **1.0 lineages** (`16k`, legacy `32k`, no system prompt): trained single-turn — only
   the current question is sent. History is kept for display and `/reset` clears it,
   but it is never fed back to the model.
-- **1.1** (`digit32k`, `System: ...` format): the system line, the last four answered
+- **Petal 1** (`digit32k`, `System: ...` format): the system line, the last four answered
   exchanges and the current question. The system line is the default persona prefixed
   with `Today is YYYY-MM-DD.`, recomputed on every request, so a session left open
   overnight picks up the new date instead of serving the one from startup. Long

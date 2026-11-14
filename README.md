@@ -1,7 +1,8 @@
 # Mini documentation
 
 Documentation for the **Mini** project: small language models (~40M and ~150M on the
-32k tokenizer lineage) designed, trained and run from
+32k tokenizer lineage; the next release is **Petal 1**, `petal-1-150M`, trained by
+**Chloris**) designed, trained and run from
 scratch, with the tools built around them. The earlier 1.0 generation (34M/70M) is
 kept in an
 [archive section](Mini-LLM/architecture.md#generation-10) of the Mini-LLM pages.
@@ -44,9 +45,9 @@ The repositories are siblings on disk:
 
 ```
 Mini/
-├── Mini-LLM/        (source repository: github.com/Mini-llm-lab/Mini-LLM)
-├── Mini-Eval/       (source repository: github.com/Mini-llm-lab/Mini-Eval)
-├── Mini-CLI/        (source repository: github.com/Mini-llm-lab/Mini-CLI)
+├── Mini-LLM/        (source repository: github.com/Chloris-Lab/Mini-LLM)
+├── Mini-Eval/       (source repository: github.com/Chloris-Lab/Mini-Eval)
+├── Mini-CLI/        (source repository: github.com/Chloris-Lab/Mini-CLI)
 └── Documentation/   (this repository)
 ```
 
