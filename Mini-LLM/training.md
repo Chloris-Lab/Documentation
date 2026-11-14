@@ -56,6 +56,15 @@ that trains the digit-split tokenizer into `models/digit32k/tok.json` and marks
 To check that everything works before a long run: `uv run pretrain 300`, then
 `uv run sft 1`.
 
+`prep` reuses an existing lineage tokenizer instead of retraining it (it is only trained
+when missing). Because a tokenizer from before the decontamination filter cannot be told
+apart from a recent one, `prep` always prints a warning when it reuses one, and refuses
+to proceed when `data/meta.json` shows no `skipped_contaminated_docs` — the signature of
+a pre-decontamination prep — unless `--allow-stale` is passed explicitly (never used for
+reported runs). `cloud/run.sh setup` also refuses to run when the checkout is behind
+`origin/main` — `git pull --ff-only` first — so a stale code tree cannot silently drop
+the filter.
+
 ## Resuming a run
 
 `pretrain` saves its full state (weights, optimizer, step) every 500 steps, and `sft`

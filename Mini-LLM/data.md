@@ -33,6 +33,12 @@ before any document is written:
 - The filter runs on tokenizer training data as well (`train_tokenizer`), and on the SFT
   mix via `prep`/`sft`; `--no-decontam` disables it explicitly and is not acceptable for
   reported runs. `data/meta.json` records `skipped_contaminated_docs`.
+- `prep` writes `skipped_contaminated_docs` into `data/meta.json` only since the filter
+  exists, so its absence is a reliable signature of a pre-decontamination prep. When
+  `prep` is asked to reuse a tokenizer that already exists, it warns — and refuses to
+  proceed on top of such a `meta.json` (the tokenizer and `val.bin` would be reused
+  unfiltered) unless `--allow-stale` is passed explicitly. It is never acceptable for
+  reported runs.
 
 The benchmark sets checked are HellaSwag, ARC-Easy, ARC-Challenge, PIQA, WinoGrande,
 OpenBookQA, SciQ, lambada_openai, wikitext-103-raw-v1 (test) and GSM8K (test), each

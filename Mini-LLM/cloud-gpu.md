@@ -28,8 +28,9 @@ cloud/run.sh status
 cloud/run.sh pack
 ```
 
-`setup` runs `cloud/preflight.sh`, a quick check that the environment and the vocab
-and data guards are in place before `prep` is started.
+`setup` first refuses to run when the checkout is behind `origin/main` (`git pull
+--ff-only`, then re-run `setup`), then runs `cloud/preflight.sh`, a quick check that the
+environment and the vocab and data guards are in place before `prep` is started.
 
 ## Notes
 
@@ -85,6 +86,12 @@ and data guards are in place before `prep` is started.
 - `prep` refuses to reuse a `data/` folder whose `meta.json` is not for the lineage
   the script targets; `PREP_FORCE=1` overwrites it. `pretrain` additionally refuses
   `.bin` files whose token counts do not match `meta.json`, with or without the flag.
+- `prep` trains the tokenizer only when it is missing: an existing
+  `models/<lineage>/tok.json` is reused as-is (with a printed warning — it cannot be
+  re-verified against the decontamination filter), and `prep` refuses outright when
+  `data/meta.json` carries no `skipped_contaminated_docs` (the signature of a
+  pre-decontamination prep) unless `--allow-stale` is passed explicitly. Moving `data/`
+  and the lineage tokenizer aside rebuilds everything with the filter.
 - `teacher` downloads `base/` from `GautierP/MiniLLM-150M` **for legacy runs** — the
   legacy teacher cannot serve a `digit32k` student (`validate_teacher` blocks it).
   It checks the pinned sha256, converts it to `models/32k/150M/teacher-150M-base.pt`
