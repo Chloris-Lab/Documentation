@@ -1,6 +1,7 @@
 # Mini-LLM
 
-Small assistants (~40M and ~150M parameters on the 32k tokenizer lineage) trained
+Small assistants (~40M and ~150M parameters on the 32k tokenizer lineage) — the next
+release is **Petal 1** (`petal-1-150M`, trained by **Chloris**) — trained
 **end-to-end** with PyTorch — custom BPE tokenizer, transformer decoder architecture,
 no pretrained backbone. The repository covers the whole chain:
 tokenizer, data, architecture, pretraining, the format stage, supervised fine-tuning
@@ -8,12 +9,12 @@ into an assistant, chat, and export. The earlier 1.0 generation (34M/70M, 16k to
 lives in the [archive](architecture.md#generation-10) section of the architecture page.
 
 Training runs on NVIDIA GPUs (CUDA). Source repository:
-[github.com/Mini-llm-lab/Mini-LLM](https://github.com/Mini-llm-lab/Mini-LLM).
+[github.com/Chloris-Lab/Mini-LLM](https://github.com/Chloris-Lab/Mini-LLM).
 
 > Training scale translates directly into output quality: base val loss drops from
 > 3.030 (70M, ~1.4B tokens) to 2.941 (150M, ~4.5B tokens) — larger models are markedly
 > more fluent and better formatted. Conformance and factual accuracy are tracked
-> continuously with [Mini-Eval](https://github.com/Mini-llm-lab/Mini-Eval).
+> continuously with [Mini-Eval](https://github.com/Chloris-Lab/Mini-Eval).
 
 ## Pages
 
@@ -32,7 +33,7 @@ Training runs on NVIDIA GPUs (CUDA). Source repository:
 Requires [uv](https://docs.astral.sh/uv/) and Python 3.11+.
 
 ```
-git clone https://github.com/Mini-llm-lab/Mini-LLM
+git clone https://github.com/Chloris-Lab/Mini-LLM
 cd Mini-LLM
 uv sync
 
@@ -56,8 +57,8 @@ Mini-LLM/
 ├── models/32k/              tok.json shared by the 40M (classic) checkpoints
 ├── models/32k/40M/          40M checkpoints and milestones
 ├── models/32k/150M/         150M 1.0 checkpoints (classic tokenizer, ctx 512)
-├── models/digit32k/         1.1 tok.json (digit-split) + 1.1 checkpoints
-├── models/digit32k/150M/    1.1 150M checkpoints and milestones
+├── models/digit32k/         Petal 1 tok.json (digit-split) + Petal 1 checkpoints
+├── models/digit32k/150M/    Petal 1 150M checkpoints and milestones
 └── src/
     └── mini_llm/
         ├── config.py      model configuration, paths, device selection
@@ -66,7 +67,7 @@ Mini-LLM/
         ├── identity.py    identity, small-talk and arithmetic examples for sft
         ├── system_prompts.py  default system prompt, dated prompts, obedience
         │                  variations, uncertainty
-        ├── math_data.py   synthetic arithmetic and mini-skills for the 1.1 SFT
+        ├── math_data.py   synthetic arithmetic and mini-skills for the Petal 1 SFT
         ├── prep.py        tokenizer and data preparation
         ├── pretrain.py    pretraining and distillation
         ├── midtrain.py    format stage: the chat markup before SFT
@@ -75,7 +76,7 @@ Mini-LLM/
         ├── chat.py        chat interface
         ├── heldout.py     held-out arithmetic, word-problem, date and format checks
         ├── checkpoints.py saving, loading and selecting checkpoints
-        ├── configuration_mini_llm.py  HF config (deploys as config.json)
-        ├── modeling_mini_llm.py       HF model, same math as model.py
+        ├── configuration_petal_llm.py  HF config (deploys as config.json)
+        ├── modeling_petal_llm.py       HF model, same math as model.py
         └── export.py      .pt -> HF directory (config + safetensors + tokenizer)
 ```

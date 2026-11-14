@@ -21,6 +21,23 @@ What fits is the distribution of English, the conversation format, and narrow sk
 (arithmetic, lists, dates) — the first comes from these two sources, the rest from the
 SFT mix below.
 
+## Decontamination
+
+Both the pretraining corpus and the SFT mix are filtered against the evaluation suites
+before any document is written:
+
+- Normalization: lower case, punctuation folded to spaces, whitespace collapsed.
+- Each document (and each SFT question, including multi-turn user turns and the GSM8K
+  train questions) is checked against the **13-gram exact** sets of every test split in
+  `small_lm`; a single shared 13-gram drops the document.
+- The filter runs on tokenizer training data as well (`train_tokenizer`), and on the SFT
+  mix via `prep`/`sft`; `--no-decontam` disables it explicitly and is not acceptable for
+  reported runs. `data/meta.json` records `skipped_contaminated_docs`.
+
+The benchmark sets checked are HellaSwag, ARC-Easy, ARC-Challenge, PIQA, WinoGrande,
+OpenBookQA, SciQ, lambada_openai, wikitext-103-raw-v1 (test) and GSM8K (test), each
+loaded from Hugging Face at filter time.
+
 ## Mixture accounting and a stable validation set
 
 `prep` counts what it wrote, per source, and stores it in `data/meta.json`:
@@ -46,26 +63,26 @@ Sources (all English):
 - [databricks-dolly-15k](https://huggingface.co/datasets/databricks/databricks-dolly-15k):
   questions and answers written by Databricks employees.
   - Without context: general instruction following.
-  - **With context** (1.1 only): the provided passage is part of the user turn, so the
+  - **With context** (Petal 1 only): the provided passage is part of the user turn, so the
     model learns to answer from a text it is given (close to open-book QA). The
-    legacy recipe drops these; 1.1 keeps them.
+    legacy recipe drops these; Petal 1 keeps them.
 - [No Robots](https://huggingface.co/datasets/HuggingFaceH4/no_robots): 10,000
   instructions written by professional annotators, including chat-style prompts.
-  1.1 also keeps multi-turn exchanges (up to four turns) as full conversations.
+  Petal 1 also keeps multi-turn exchanges (up to four turns) as full conversations.
 - [OpenAssistant oasst2](https://huggingface.co/datasets/OpenAssistant/oasst2):
-  volunteer-written conversations. Only English, top-ranked answers. 1.1 follows
+  volunteer-written conversations. Only English, top-ranked answers. Petal 1 follows
   whole threads (up to four turns: question → top answer → follow-up → top answer).
 - [alpaca-cleaned](https://huggingface.co/datasets/yahma/alpaca-cleaned): **AI-written**
   (generated with an OpenAI model). It adds short, simple answers, but it is capped so
   that it never exceeds 25% of the mix (`AI_MAX_SHARE` in `sft.py`); human data always
   dominates.
-- [gsm8k](https://huggingface.co/datasets/openai/gsm8k) (1.1 only): grade-school word
+- [gsm8k](https://huggingface.co/datasets/openai/gsm8k) (Petal 1 only): grade-school word
   problems, filtered to at most 2 reasoning steps and 80 words, ~4k examples. The
   real-language bridge between the synthetic arithmetic and ordinary chat.
-- [`identity.py`](https://github.com/Mini-llm-lab/Mini-LLM/blob/main/src/mini_llm/identity.py):
+- [`identity.py`](https://github.com/Chloris-Lab/Mini-LLM/blob/main/src/mini_llm/identity.py):
   identity, small-talk, limits, written for this project, repeated a few times.
-- [`system_prompts.py`](https://github.com/Mini-llm-lab/Mini-LLM/blob/src/mini_llm/system_prompts.py)
-  (1.1 only): the default system prompt plus hand-written variations
+- [`system_prompts.py`](https://github.com/Chloris-Lab/Mini-LLM/blob/src/mini_llm/system_prompts.py)
+  (Petal 1 only): the default system prompt plus hand-written variations
   ("Answer in one sentence.", "Answer with a numbered list.",
   "Answer with a markdown list of four items.", ...) whose answers match
   the instruction — this is what teaches system-prompt obedience and markdown output
@@ -76,8 +93,8 @@ Sources (all English):
   system line *does* instead of memorising one exact string. The canonical wording
   still dominates, because it is the one `chat`, the export template and Mini-CLI send
   at inference.
-- [`math_data.py`](https://github.com/Mini-llm-lab/Mini-LLM/blob/main/src/mini_llm/math_data.py)
-  (1.1 only): synthetic arithmetic and token-level skills, deterministic by seed:
+- [`math_data.py`](https://github.com/Chloris-Lab/Mini-LLM/blob/main/src/mini_llm/math_data.py)
+  (Petal 1 only): synthetic arithmetic and token-level skills, deterministic by seed:
   - multiplication tables 1–12 and their inverse divisions, covered exhaustively but
     held to ~10 % of the math mix (`table_share`), so they stay a base and not a crutch;
   - additions/subtractions 1–6 digits, with ~10 % of subtractions landing on a
@@ -96,7 +113,7 @@ Sources (all English):
   The synthetic maths is capped at `MATH_MAX_SHARE` (30 %) of the supervised SFT tokens,
   next to the ~45k human source pairs. Arithmetic saturates well before the cap; the
   tokens it frees up go to chat.
-- Date examples (1.1 only): ~400 `What is today's date?` pairs whose answer is copied
+- Date examples (Petal 1 only): ~400 `What is today's date?` pairs whose answer is copied
   from the `Today is YYYY-MM-DD.` line of the system prompt, with dates spread over
   2024–2027, and ~90 % of the other system prompts carry such a line (`DATE_SHARE` in
   `sft.py`). The point is to read the date, not to memorise one — see
@@ -116,12 +133,12 @@ forgetting how to write English. See [Training](training.md#format-stage).
 
 ## Conversation format
 
-Defined in [`prompt.py`](https://github.com/Mini-llm-lab/Mini-LLM/blob/main/src/mini_llm/prompt.py),
+Defined in [`prompt.py`](https://github.com/Chloris-Lab/Mini-LLM/blob/main/src/mini_llm/prompt.py),
 versioned per tokenizer lineage (see
 [Architecture](architecture.md#conversation-format)):
 
 - legacy: `User: <question>\nAssistant:` — prompt masked, loss on the answer.
-- 1.1 (`digit32k`): `System: ...\nUser: ...\nAssistant:` — the system header and the
+- Petal 1 (`digit32k`): `System: ...\nUser: ...\nAssistant:` — the system header and the
   questions are masked; loss covers every assistant answer, in single-turn pairs and
   in two-turn conversations alike. Multi-turn sequences end each assistant turn with
   `<eos>`, exactly what generation emits.

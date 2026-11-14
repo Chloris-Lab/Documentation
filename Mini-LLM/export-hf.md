@@ -38,7 +38,9 @@ uv run export models/32k/150M/mini-llm-assistant-150M.pt
 `--base` is for base models: the tokenizer ships without the chat template and
 `generation_config.json` keeps the model defaults instead of the assistant's sampling.
 Output directories are `exports/<checkpoint stem>-hf` at the repository root
-(`--out` overrides); `exports/` and `*.safetensors` are ignored by Git.
+(`--out` overrides); `exports/` and `*.safetensors` are ignored by Git. A new
+`petal-1-150M.pt` therefore exports to `exports/petal-1-150M-hf/`.
+The HF format's `model_type` is `petal_llm` (was `mini_llm` for legacy exports).
 
 ## Output
 
@@ -48,9 +50,9 @@ Each output directory is self-contained and Hub-ready:
 | --------------------------- | -------------------------------------------------------------------- |
 | `config.json`               | Model configuration                                                  |
 | `model.safetensors`         | Weights, tied `head` deduplicated                                    |
-| `tokenizer.json` + `tokenizer_config.json` | Tokenizer (`chat_template.jinja` for assistants, matching the training format: a `System:` line for the 1.1 lineage, plain `User:/Assistant:` otherwise) |
+| `tokenizer.json` + `tokenizer_config.json` | Tokenizer (`chat_template.jinja` for assistants, matching the training format: a `System:` line for the Petal 1 lineage, plain `User:/Assistant:` otherwise) |
 | `generation_config.json`    | Assistant: same sampling as `chat.py`; base: model defaults          |
-| `configuration_mini_llm.py` / `modeling_mini_llm.py` | For `trust_remote_code`                                 |
+| `configuration_petal_llm.py` / `modeling_petal_llm.py` | For `trust_remote_code` (new exports; legacy exports ship `configuration_mini_llm.py` / `modeling_mini_llm.py`)                                 |
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -93,7 +95,7 @@ and sibling Mini-Eval) before export.
 
 ## See also
 
-- [Design notes](design-notes.md) — `model.py` and `modeling_mini_llm.py` implement
+- [Design notes](design-notes.md) — `model.py` and `modeling_petal_llm.py` implement
   the same math and must change together.
 - [Mini-CLI inference](../Mini-CLI/inference.md) — the exported directory is one of
   the two formats the CLI can load.

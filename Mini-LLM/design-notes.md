@@ -4,17 +4,21 @@ Things to keep in mind when changing the code:
 
 - Token ids are stored as `uint16` in the `.bin` files, so `Cfg.vocab` must stay at or
   below 65,536. Changing `vocab` **or switching tokenizer lineage** invalidates
-  `tok.json` and the data: delete them and run `prep` again (for the 1.1 digit-split
+  `tok.json` and the data: delete them and run `prep` again (for the Petal 1 digit-split
   tokenizer, `prep --lineage digit32k` writes `models/digit32k/tok.json`; the legacy
   `models/32k/tok.json` is left untouched so the 40M keeps working). See
   [Data](data.md#tokenized-files).
-- Naming: **1.1 is the temporary tag for the current recipe** (`digit32k` lineage,
-  ctx 2048, system-prompt format) until the final branding. Later releases keep only
-  the product name and the version — `name-1`, `name-1.1`, ... — with no parameter
-  sizes in the public name; the `digit32k` and `150M` folder names stay as technical
-  identifiers in code and checkpoints.
+- Naming: releases use `petal-<version>-<size>`, e.g. `petal-1-150M` — the
+  version is a separate constant (`MODEL_VERSION = "1"` in `config.py`, overridable at
+  run time with `PETAL_VERSION`, e.g. `PETAL_VERSION=2 cloud/run.sh train`). Files:
+  `petal-1-150M-base-53375steps.pt` (base), `petal-1-150M-base-53975steps.pt`
+  (after the format stage), `petal-1-150M.pt` (final assistant). Dotted versions like
+  `petal-1.1-150M.pt` are accepted by the checkpoint resolver too. The `digit32k` and
+  `150M` folder names stay as technical identifiers in code and checkpoints.
+  `mini-llm-*` file names are legacy: the checkpoints still load and the resolution
+  falls back to them, but new runs use the Petal names.
 - The prompt format is defined once, in
-  [`prompt.py`](https://github.com/Mini-llm-lab/Mini-LLM/blob/main/src/mini_llm/prompt.py),
+  [`prompt.py`](https://github.com/Chloris-Lab/Mini-LLM/blob/main/src/mini_llm/prompt.py),
   and is **versioned by tokenizer lineage** (`Cfg.lineage`): legacy lineages train and
   infer with `User:/Assistant:`, the `digit32k` lineage always sends a System line. A
   checkpoint carries its own configuration, so presets can change without breaking old
@@ -50,7 +54,7 @@ Things to keep in mind when changing the code:
 - `*.pt`, `*.safetensors`, `*.bin`, `data/` and `exports/` are ignored by Git, and
   the lineage `tok.json` files (`models/16k/tok.json`, `models/32k/tok.json`) are
   tracked. Do not `git add -f` model files.
-- `model.py` (training) and `modeling_mini_llm.py` (HF deploy) implement the same
+- `model.py` (training) and `modeling_petal_llm.py` (HF deploy) implement the same
   math; `tests/test_hf_export.py` checks logit parity. Change both together. The
   native RoPE buffers are non-persistent, the HF ones persistent (transformers'
   loader needs them in `model.safetensors`). See [Export](export-hf.md).

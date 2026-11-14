@@ -5,7 +5,7 @@ in `cloud/` target a RunPod pod with a persistent volume on `/workspace`.
 
 ## Usage
 
-Defaults for `cloud/run.sh`: the **150M 1.1 recipe** — `SIZE=150M`, `STEPS=53375`,
+Defaults for `cloud/run.sh`: the **150M Petal 1 recipe** — `SIZE=150M`, `STEPS=53375`,
 `PREP_MILLIONS=7300` (~7.0B tokens ≈ 46 tokens/param) on the `digit32k` lineage
 (digit-split tokenizer, ctx 2048). Checkpoints land in `models/digit32k/150M/`.
 
@@ -21,7 +21,7 @@ cloud/run.sh smoke   # 100-step check, note the tok/s
 cloud/run.sh train   # 53,375 steps, background, adds --resume automatically
 cloud/run.sh midtrain # 600-step format stage on that base, background
 cloud/run.sh sft     # 2 epochs on the format-stage base when it exists
-cloud/run.sh eval    # protocol v2 suite, on the pod GPU
+cloud/run.sh eval    # protocol v3 suite, on the pod GPU
 cloud/run.sh test    # pytest, training repo + sibling Mini-Eval
 cloud/run.sh export-hf # tests, then export base + assistant
 cloud/run.sh status
@@ -34,7 +34,9 @@ and data guards are in place before `prep` is started.
 ## Notes
 
 - `SIZE`, `STEPS` and `PREP_MILLIONS` are read from the environment; each `SIZE` has a
-  built-in recipe (steps + token budget) used when you do not override them. Switch a
+  built-in recipe (steps + token budget) used when you do not override them. The release
+  version is `PETAL_VERSION` (default `1`), e.g. `PETAL_VERSION=2 cloud/run.sh train`
+  produces `petal-2-*` files. Switch a
   run without editing the script:
 
   | `SIZE`  | Default `STEPS` | Default `PREP_MILLIONS` | Lineage    |
@@ -48,12 +50,13 @@ and data guards are in place before `prep` is started.
   SIZE=40M STEPS=40000 PREP_MILLIONS=5000 cloud/run.sh train   # custom recipe
   ```
 
-  The 150M 1.1 preset relies on `pretrain`'s ctx-aware batch
+  The 150M Petal 1 preset relies on `pretrain`'s ctx-aware batch
   defaults (micro-batches stay ≤ 65,536 tokens: 32×2×2048 = 131,072 tokens/step).
 - `midtrain` runs the format stage between `train` and `sft`: `MID_STEPS` (600),
   `MID_REPLAY` (0.3, share of raw-text batches from `data/train.bin`), `MID_LR_MAX`
   (1e-4), `MID_LR_MIN` (1e-5) and `MID_WARMUP` (50). It writes
-  `models/<lineage>/<size>/mini-llm-base-<size>-<steps+MID_STEPS>steps.pt`; `sft` uses
+  `models/<lineage>/<size>/petal-<version>-<size>-base-<steps+MID_STEPS>steps.pt` (legacy runs write
+  `mini-llm-base-<size>-<steps+MID_STEPS>steps.pt`); `sft` uses
   that file when it exists, and the pretrained checkpoint when it does not.
 - The learning-rate schedule is passed explicitly in the command, not hidden in the
   code: `train`/`smoke` run `pretrain` with `--lr-max --lr-cont --lr-min --warmup`,
@@ -65,7 +68,7 @@ and data guards are in place before `prep` is started.
   before starting.
 - The architecture is passed explicitly too: `train`/`smoke` also carry
   `--dim --layers --heads --ffn --vocab --ctx` (40M: 512 / 8 / 8 / 1408 / 32768 / 1024;
-  70M: 640 / 12 / 10 / 1728 / 16384 / 512; 150M 1.1: 768 / 18 / 12 / 2048 / 32768 /
+  70M: 640 / 12 / 10 / 1728 / 16384 / 512; 150M Petal 1: 768 / 18 / 12 / 2048 / 32768 /
   2048). Override any field from the environment to train a custom model without
   touching the code:
 
@@ -76,7 +79,7 @@ and data guards are in place before `prep` is started.
   ```
 
   The checkpoints keep the tag computed from the real parameter count
-  (`mini-llm-base-<X>M-...`), so a custom model never collides with the recipe it
+  (`petal-<version>-<X>M-...`, or `mini-llm-<X>M-...` for legacy names), so a custom model never collides with the recipe it
   started from. `pretrain` refuses `dim` not divisible by `heads`, a `--vocab`
   override without matching `data/` (`prep` regenerates it), and non-positive values.
 - `prep` refuses to reuse a `data/` folder whose `meta.json` is not for the lineage
@@ -105,16 +108,17 @@ and data guards are in place before `prep` is started.
   choosing a GPU for the full run. With `TEACHER` set it also runs the distillation
   path and logs `ce` and `kd` separately.
 - `sft` passes the base checkpoint explicitly
-  (`models/<lineage>/<SIZE>/mini-llm-base-<SIZE>-<STEPS>steps.pt`): automatic selection
+  (`models/<lineage>/<SIZE>/petal-<version>-<SIZE>-base-<STEPS>steps.pt`): automatic selection
   ranks by step count, which can pick another size (70M, 150M).
-- `eval` runs `mini-eval check` then the `small_lm` suite on protocol v2 (six models
-  by default, CUDA, full test sets) from the sibling `../Mini-Eval` checkout
-  (`MINI_EVAL_DIR` overrides the path). It never runs automatically after training —
-  it is a separate command. The evaluated models can be overridden with `EVAL_MODELS`
-  (e.g. `EVAL_MODELS="mini-llm-40M-35096steps pythia-70m-step143000"`, `EVAL_CHECK`
-  for the check target). It needs `uv sync --extra native` in Mini-Eval and the new
-  checkpoint's `sha256` filled in its `models.yaml` (`mini-eval fingerprint`);
-  `mini-eval` itself refuses to run anywhere but Linux.
+- `eval` runs the `small_lm` suite on protocol v3 (`mini-llm-150M-base` + the four
+  HF references, five models by default; CUDA, full test sets) from the sibling
+  `../Mini-Eval` checkout (`MINI_EVAL_DIR` overrides the path). It never runs
+  automatically after training — it is a separate command. `mini-eval check` only
+  applies to native models, so it runs only when `EVAL_CHECK` is set (e.g. the Petal
+  package once it exists). The evaluated models can be overridden with `EVAL_MODELS`
+  (e.g. `EVAL_MODELS="mini-llm-150M-base pythia-70m-step143000"`). It needs
+  `uv sync --extra native` in Mini-Eval; `mini-eval` itself refuses to run anywhere
+  but Linux.
 - `test` runs `uv run pytest` in this repository and, when the sibling `../Mini-Eval`
   checkout exists on Linux (`uv sync --extra native` there first), its suite too.
   `export-hf` runs it first, then exports

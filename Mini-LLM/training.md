@@ -49,7 +49,7 @@ Every training detail is given on the command line, never hidden in the code:
   fallbacks; `cloud/run.sh` spells every value out explicitly in the commands it
   launches.
 
-`prep` also accepts `--lineage digit32k` (or `--size 150M`, which implies it since 1.1):
+`prep` also accepts `--lineage digit32k` (or `--size 150M`, which implies it since Petal 1):
 that trains the digit-split tokenizer into `models/digit32k/tok.json` and marks
 `data/meta.json` with the lineage. `pretrain` refuses data whose stored lineage differs.
 
@@ -127,7 +127,7 @@ The 1.0 presets (`34M`, `70M`) are unchanged and their checkpoints still load wi
   (`models/32k/40M/`, `models/32k/150M/`), so old models keep working.
 - **Data budget.** Cloud runs use 131,072 tokens/step (`64x2x1024` for 40M,
   `32x2x2048` for 150M): the 40M recipe runs 35,096 steps ≈ 4.6B tokens (~108
-  tokens/param) over 4.6B prepared tokens (`PREP_MILLIONS=4600`), the 150M 1.1 recipe
+  tokens/param) over 4.6B prepared tokens (`PREP_MILLIONS=4600`), the 150M Petal 1 recipe
   53,375 steps ≈ 7.0B tokens (~46 tokens/param, about one pass over the 7.3B tokens of
   `PREP_MILLIONS=7300`). The published 150M
   (`mini-llm-base-150M-34332steps.pt`) is the older, shorter 1.0-era run: 34,332 steps
@@ -159,7 +159,7 @@ and the assistant tends to keep copying the prompt. The base checkpoint answers
 turns that into an actual answer.
 
 ```
-uv run midtrain 600 --init models/32k/150M/mini-llm-base-150M-53375steps.pt --device cuda
+uv run midtrain 600 --init models/digit32k/150M/petal-1-150M-base-53375steps.pt --device cuda
 ```
 
 - 600 steps (`MID_STEPS`), lr 1e-4 → 1e-5 cosine (`MID_LR_MAX`/`MID_LR_MIN`), `--warmup`
@@ -171,7 +171,8 @@ uv run midtrain 600 --init models/32k/150M/mini-llm-base-150M-53375steps.pt --de
   from `data/train.bin`, so the base distribution does not decay while the markup is
   learnt. `train.bin` and `val.bin` are only read, never rewritten, and the run aborts
   if `data/meta.json` does not describe them (same guard as `pretrain`).
-- The output is `mini-llm-base-<size>-<base_steps+600>steps.pt` — a base line with a
+- The output is `petal-<version>-<size>-base-<base_steps+600>steps.pt` (legacy:
+  `mini-llm-base-<size>-<base_steps+600>steps.pt`) — a base line with a
   higher step count, so `sft` picks it over the pretrained checkpoint on its own and
   the pretrained file stays untouched. `val.bin` loss and `bits/byte` are still printed,
   but the stage changes the loss on format text, not on web text.
@@ -187,8 +188,8 @@ uv run midtrain 600 --init models/32k/150M/mini-llm-base-150M-53375steps.pt --de
 
 Legacy lineages only. The teacher (`teacher-150M-base.pt`) was trained on the classic
 32k tokenizer at ctx 512; `validate_teacher` requires the same tokenizer lineage and a
-teacher ctx ≥ student ctx, so a 1.1 student (`digit32k`, ctx 2048) **cannot** distill
-from it — the 1.1 150M, once trained, becomes the new teacher for a future 1.1 40M (the
+teacher ctx ≥ student ctx, so a Petal 1 student (`digit32k`, ctx 2048) **cannot** distill
+from it — the Petal 1 150M, once trained, becomes the new teacher for a future Petal 1 40M (the
 student must then also move to `digit32k`).
 
 For a legacy student: the teacher is downloaded from `GautierP/MiniLLM-150M` (subfolder `base/`), checked against a
@@ -214,8 +215,9 @@ instead of materializing them all at once.
   stored in the `.state.pt` and a mismatch is refused.
 - Keep the converted teacher as `teacher-150M-base.pt`. The canonical
   `mini-llm-base-150M-34332steps.pt` has a pinned `sha256` in Mini-Eval, and
-  re-saving it with the conversion changes its bytes. `pack` only archives
-  `mini-llm-base-*` and `mini-llm-assistant-*`, so the teacher is not shipped.
+  re-saving it with the conversion changes its bytes. `pack` only archives the
+  Petal 1 `petal-*` patterns and the legacy `mini-llm-*` ones, so the teacher
+  is not shipped.
 
 ## See also
 

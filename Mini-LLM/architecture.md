@@ -3,11 +3,11 @@
 A decoder-only transformer: RMSNorm, RoPE (rotary position embeddings), causal attention,
 SwiGLU feed-forward, and an embedding matrix shared with the output head. Everything
 lives in `Cfg` (`PRESETS` in
-[`config.py`](https://github.com/Mini-llm-lab/Mini-LLM/blob/main/src/mini_llm/config.py)).
+[`config.py`](https://github.com/Chloris-Lab/Mini-LLM/blob/main/src/mini_llm/config.py)).
 
 ## Sizes
 
-| Setting                   | 40M        | 70M        | 150M (1.1)   |
+| Setting                   | 40M        | 70M        | 150M (Petal 1)   |
 | ------------------------- | ---------- | ---------- | ----------- |
 | Parameters                | 42,476,032 | 69,975,680 | 152,596,224 |
 | `dim` (width)             | 512        | 640        | 768         |
@@ -18,9 +18,9 @@ lives in `Cfg` (`PRESETS` in
 | Tokenizer lineage         | `32k`      | `16k`      | `digit32k`  |
 | Context length            | 1024 tokens| 512 tokens | 2048 tokens |
 
-The 150M 1.1 runs on the `digit32k` lineage: same 32k-vocabulary BPE, but the
+The 150M Petal 1 runs on the `digit32k` lineage: same 32k-vocabulary BPE, but the
 pre-tokenizer isolates every digit (one token per digit, like modern GPT/llama
-tokenizers) so arithmetic never has to fight merged numbers. The `ctx` of the 1.1 150M
+tokenizers) so arithmetic never has to fight merged numbers. The `ctx` of the Petal 1 150M
 preset is 2048 tokens. Older checkpoints keep their own stored configuration and stay
 loadable: adding the `lineage` field or changing a preset never breaks them.
 
@@ -49,10 +49,10 @@ Trained checkpoints live in `models/`:
 | `mini-llm-assistant-70M.pt` (epoch 2/3)  | 3800  | SFT         | 2.718    |
 | `mini-llm-assistant-150M.pt` (epoch 2/2) | 3880  | SFT         | 2.780    |
 
-The 150M 1.1 recipe (`SIZE=150M` in `cloud/run.sh`: `STEPS=53375`, ctx 2048, ~7B tokens
-on the `digit32k` lineage) produces `models/digit32k/150M/`; the rows above list the
-checkpoints of the earlier 1.0 recipes (the 34M model — the 1.0 of this family, the
-40M being its 1.1 — has its own archive section below).
+The 150M Petal 1 recipe (`SIZE=150M` in `cloud/run.sh`: `STEPS=53375`, ctx 2048, ~7B tokens
+on the `digit32k` lineage) is what produces the next model; the rows above list the
+checkpoints of the earlier generations (the 34M model — the 1.0 of the family, the
+40M its successor — has its own archive section below).
 
 The 70M base was trained on the cloud (`cloud/run.sh`: `SIZE=70M`, `STEPS=22000`,
 `PREP_MILLIONS=1500`, CUDA batch `32x4x512`, so `65536` tokens/step), and so was the
@@ -65,15 +65,15 @@ either — compare lineages with bits per byte (see
 ## Conversation format
 
 The prompt format is defined once, in
-[`prompt.py`](https://github.com/Mini-llm-lab/Mini-LLM/blob/main/src/mini_llm/prompt.py),
+[`prompt.py`](https://github.com/Chloris-Lab/Mini-LLM/blob/main/src/mini_llm/prompt.py),
 and shared by `sft` and `chat`. The format is **versioned per tokenizer lineage**:
 
 | Lineage     | Format                                                       |
 | ----------- | ------------------------------------------------------------ |
 | legacy (`16k`, `32k`) | `User: <question>\nAssistant:`                     |
-| 1.1 (`digit32k`)       | `System: <system>\nUser: <question>\nAssistant:`   |
+| Petal 1 (`digit32k`)       | `System: <system>\nUser: <question>\nAssistant:`   |
 
-- 1.1 models always train with a system prompt: ~90 % of examples carry the short
+- Petal 1 models always train with a system prompt: ~90 % of examples carry the short
   default persona (`DEFAULT_SYSTEM_PROMPT`) prefixed with `Today is <date>.`, and on
   ~15 % of them one of three paraphrases of that persona (`SYSTEM_PARAPHRASES`)
   replaces the canonical text — same role, different wording, so the model follows
@@ -94,18 +94,17 @@ and shared by `sft` and `chat`. The format is **versioned per tokenizer lineage*
   `prompt.py`, `strftime_now('%Y-%m-%d')` in the template), so a long-running process
   never serves yesterday's date. Training shows the same line with dates spread over
   2024–2027: the model learns to copy the date it is given, not to remember one.
-- Mini-CLI 1.1 models get the same treatment in `python/mini_engine.py`; what you type
+- Mini-CLI Petal 1 models get the same treatment in `python/mini_engine.py`; what you type
   in `mini chat` matches what the model saw in training.
-- Multi-turn: 1.1 SFT includes conversations of up to four turns (every assistant
+- Multi-turn: Petal 1 SFT includes conversations of up to four turns (every assistant
   answer is supervised), `chat` and Mini-CLI send the last four answered exchanges,
   and the `digit32k` lineage has room for it at ctx 2048. Legacy lineages keep the
   single-turn behaviour.
 
 ## Generation 1.0 (archive)
 
-The first generation is separated from the current family, like the 150M 1.0 model
-is kept apart from the 150M 1.1 recipe: `34M` is the 1.0 of the small-assistant
-family, `40M` is its 1.1.
+The first generation is separated from the current family: `34M` is the 1.0 of the
+small-assistant family, `40M` its successor. Petal 1 starts with the 150M recipe.
 
 | Checkpoint                        | Steps | Tokens seen | Val loss |
 | --------------------------------- | ----- | ----------- | -------- |
