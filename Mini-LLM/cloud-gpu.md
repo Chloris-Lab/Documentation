@@ -60,7 +60,7 @@ environment and the vocab and data guards are in place before `prep` is started.
   `mini-llm-base-<size>-<steps+MID_STEPS>steps.pt`); `sft` uses
   that file when it exists, and the pretrained checkpoint when it does not.
 - The learning-rate schedule is passed explicitly in the command, not hidden in the
-  code: `train`/`smoke` run `pretrain` with `--lr-max --lr-cont --lr-min --warmup`,
+  code: `train`/`smoke` run `pretrain` with `--lr --lr-cont --lr-min --warmup`,
   `midtrain` with `--lr-max --lr-min --warmup`, and
   `sft` with `--lr-max --lr-min --warmup`. Defaults per `SIZE` (40M/150M:
   5e-4 / 3e-4 / 5e-5 / 1000; 70M: 6e-4 / 3e-4 / 6e-5 / 500; SFT: 2e-4 / 2e-5 / 50) can

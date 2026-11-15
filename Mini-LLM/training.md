@@ -38,7 +38,7 @@ Every training detail is given on the command line, never hidden in the code:
 
 - `pretrain` takes the architecture (`--dim`, `--layers`, `--heads`, `--ffn`,
   `--vocab`, `--ctx` — the `--size` preset is only the fallback) and the schedule
-  (`--lr-max`, `--lr-cont` (peak lr of a continued run), `--lr-min`, `--warmup`); it
+  (`--lr`, `--lr-cont` (peak lr of a continued run), `--lr-min`, `--warmup`); it
   prints the full schedule (`lr: peak x | cont y | min z | warmup n`) before starting.
 - Before the first step, `pretrain` prints the data accounting recorded by `prep`:
   `bytes/token`, and for each source its share of the training tokens and the number of
@@ -93,7 +93,7 @@ on it:
 
 ```
 uv run prep 250
-uv run pretrain 12000 --init mini-llm-base-40M-30000steps.pt --lr-max 5e-4 --lr-cont 3e-4 --lr-min 5e-5 --warmup 1000
+uv run pretrain 12000 --init mini-llm-base-40M-30000steps.pt --lr 5e-4 --lr-cont 3e-4 --lr-min 5e-5 --warmup 1000
 uv run sft 2
 ```
 
