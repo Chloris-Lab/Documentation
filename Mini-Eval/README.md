@@ -56,9 +56,11 @@ uv run mini-eval report small_lm
 uv run pytest
 ```
 
-The line-up is the four HF references plus **one** mini model (`mini-llm-150M-base`,
-`GautierP/MiniLLM-150M` under `base/`); the Petal 150M entry is uncommented once the
-checkpoint exists. The legacy 34M/40M/70M/150M native models are not evaluated.
+The line-up is the four HF references plus **one** mini model. It is `petal-1-150M`
+(`kind: native`, `digit32k/150M/petal-1-150M-base-53375steps.pt`, checkpoint and tokenizer
+pinned by SHA-256 in `models.yaml`); `mini-llm-150M-base` (`GautierP/MiniLLM-150M` under
+`base/`) remains as the legacy 1.0 reference. The legacy 34M/40M/70M/150M native models
+are not evaluated.
 
 See [Workflow](workflow.md) for what each command does, including the regular
 workflow rule: `run` always rebuilds **two reports** from the latest runs —

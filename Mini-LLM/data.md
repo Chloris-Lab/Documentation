@@ -4,7 +4,11 @@
 
 Streamed and shuffled, 70/30 by **document** count, which lands near 69/31 **by token**
 with the 32k tokenizer (a FineWeb-Edu document averages ~990 tokens, a Wikipedia
-article ~1 050, so the two sources weigh about the same per document):
+article ~1 050, so the two sources weigh about the same per document). With the Petal 1
+digit-split tokenizer the realized share measured in `data/meta.json` is 76.9 %
+fineweb-edu / 23.1 % wikipedia by token — the 70/30 draw is correct per document, but
+Wikipedia articles average fewer kept tokens in that corpus (see
+`skipped_contaminated_docs` and `skipped_short_docs` in `data/meta.json`):
 
 - [FineWeb-Edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu)
   (`sample-10BT`): educational web pages written by humans.
