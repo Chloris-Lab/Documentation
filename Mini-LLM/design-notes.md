@@ -52,8 +52,8 @@ Things to keep in mind when changing the code:
   special token. Multi-turn conversations supervise every assistant turn and close
   each one with `<eos>`, matching what generation would emit.
 - `*.pt`, `*.safetensors`, `*.bin`, `data/` and `exports/` are ignored by Git, and
-  the lineage `tok.json` files (`models/16k/tok.json`, `models/32k/tok.json`) are
-  tracked. Do not `git add -f` model files.
+  the lineage `tok.json` files (`models/16k/tok.json`, `models/32k/tok.json`,
+  `models/digit32k/tok.json`) are tracked. Do not `git add -f` model files.
 - `model.py` (training) and `modeling_petal_llm.py` (HF deploy) implement the same
   math; `tests/test_hf_export.py` checks logit parity. Change both together. The
   native RoPE buffers are non-persistent, the HF ones persistent (transformers'

@@ -119,7 +119,10 @@ The 32k lineage has two presets (see the [sizes table](architecture.md#sizes)):
 
 - **40M** — the 1.0-generation architecture (`dim=512, layers=8, heads=8, ffn=1408`,
   preserved from the 34M era, kept in the
-  [archive section](architecture.md#generation-10)) with a 32,768-token vocabulary:
+  [archive section](architecture.md#generation-10)) with a 32,768-token vocabulary.
+  Petal 1 uses the digit-split `digit32k` lineage (same 32k vocabulary, pre-tokenizer
+  splitting digits), its `tok.json` tracked like the other lineages and stored in
+  `models/digit32k/` with its checkpoints in `models/digit32k/150M/`:
   42,476,032 parameters, 25,698,816 non-embedding. The 40M base is the direct
   successor of the 1.0 runs; new embedding parameters (32,768 × 512) are the only
   difference from the old 34M shape.
