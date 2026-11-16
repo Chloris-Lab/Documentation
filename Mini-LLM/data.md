@@ -84,13 +84,14 @@ Sources (all English):
   whole threads (up to four turns: question → top answer → follow-up → top answer).
 - [alpaca-cleaned](https://huggingface.co/datasets/yahma/alpaca-cleaned): **AI-written**
   (generated with an OpenAI model). It adds short, simple answers, but it is capped so
-  that it never exceeds 25% of the mix (`AI_MAX_SHARE` in `sft.py`); human data always
+  that it never exceeds 15% of the mix (`AI_MAX_SHARE` in `sft.py`); human data always
   dominates.
 - [gsm8k](https://huggingface.co/datasets/openai/gsm8k) (Petal 1 only): grade-school word
   problems, filtered to at most 2 reasoning steps and 80 words, ~4k examples. The
   real-language bridge between the synthetic arithmetic and ordinary chat.
 - [`identity.py`](https://github.com/Chloris-Lab/Mini-LLM/blob/main/src/mini_llm/identity.py):
-  identity, small-talk, limits, written for this project, repeated a few times.
+  identity, small-talk, limits, written for this project, repeated fifteen times
+  (`IDENTITY_REPEAT` in `sft.py`).
 - [`system_prompts.py`](https://github.com/Chloris-Lab/Mini-LLM/blob/src/mini_llm/system_prompts.py)
   (Petal 1 only): the default system prompt plus hand-written variations
   ("Answer in one sentence.", "Answer with a numbered list.",
@@ -132,10 +133,15 @@ Sources (all English):
   the digit-split lineage): every example inside numbers is a plain digit run.
 
 Examples that do not fit in the context window are dropped, and 500 examples are held
-out for validation. SFT runs 2 epochs over this mix (the 70M run overfit at epoch 3).
+out for validation. SFT runs 1 epoch over this mix (the 150M run overfit at 2), and a
+share of microbatches (15 % by default, `SFT_REPLAY` in `sft.py`, `--replay` on the CLI)
+are raw windows from `data/train.bin` as plain next-token batches — the same replay the
+format stage uses — so the base distribution does not decay during SFT. Identity-leaky
+assistant turns ("I'm OpenAssistant", …) are dropped in single pairs and in multi-turn
+conversations alike.
 
 The format stage (`midtrain`, before SFT) uses a chat-only slice of the same recipe:
-dolly, No Robots, oasst2, alpaca (same 25 % cap), identity and small-talk, arithmetic,
+dolly, No Robots, oasst2, alpaca (same 15 % cap), identity and small-talk, arithmetic,
 system-prompt variations and dates — no gsm8k, no `math_data` synthetic arithmetic, no
 word problems. It is not a second SFT: 600 steps where the prompt tokens are masked and
 30 % of the batches replay raw text from `data/train.bin`, so the markup lands without

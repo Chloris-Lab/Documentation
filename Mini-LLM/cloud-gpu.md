@@ -20,7 +20,7 @@ cloud/run.sh teacher # download + convert the legacy 150M base teacher (legacy r
 cloud/run.sh smoke   # 100-step check, note the tok/s
 cloud/run.sh train   # 53,375 steps, background, adds --resume automatically
 cloud/run.sh midtrain # 600-step format stage on that base, background
-cloud/run.sh sft     # 2 epochs on the format-stage base when it exists
+cloud/run.sh sft     # 1 epoch, 15% replay, on the format-stage base when it exists
 cloud/run.sh eval    # protocol v3 suite, on the pod GPU
 cloud/run.sh test    # pytest, training repo + sibling Mini-Eval
 cloud/run.sh export-hf # tests, then export base + assistant
@@ -62,10 +62,11 @@ environment and the vocab and data guards are in place before `prep` is started.
 - The learning-rate schedule is passed explicitly in the command, not hidden in the
   code: `train`/`smoke` run `pretrain` with `--lr --lr-cont --lr-min --warmup`,
   `midtrain` with `--lr-max --lr-min --warmup`, and
-  `sft` with `--lr-max --lr-min --warmup`. Defaults per `SIZE` (40M/150M:
-  5e-4 / 3e-4 / 5e-5 / 1000; 70M: 6e-4 / 3e-4 / 6e-5 / 500; SFT: 2e-4 / 2e-5 / 50) can
-  be overridden from the environment with `LR_MAX`, `LR_CONT`, `LR_MIN`, `LR_WARMUP`,
-  `SFT_LR_MAX`, `SFT_LR_MIN`, `SFT_LR_WARMUP`. `pretrain` prints the full schedule
+  `sft` with `--lr-max --lr-min --warmup --replay`. Defaults per `SIZE` (40M/150M:
+  5e-4 / 3e-4 / 5e-5 / 1000; 70M: 6e-4 / 3e-4 / 6e-5 / 500; SFT: 1e-4 / 1e-5 / 100 /
+  0.15 replay) can be overridden from the environment with `LR_MAX`, `LR_CONT`,
+  `LR_MIN`, `LR_WARMUP`, `SFT_LR_MAX`, `SFT_LR_MIN`, `SFT_LR_WARMUP`, `SFT_REPLAY`
+  (and `SFT_EPOCHS` for the epoch count). `pretrain` prints the full schedule
   before starting.
 - The architecture is passed explicitly too: `train`/`smoke` also carry
   `--dim --layers --heads --ffn --vocab --ctx` (40M: 512 / 8 / 8 / 1408 / 32768 / 1024;

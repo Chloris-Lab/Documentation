@@ -44,9 +44,13 @@ Things to keep in mind when changing the code:
   checkpoint chat-shaped and unrecoverable; leaving it to SFT spends supervised budget on
   `System:`/`User:`/`Assistant:` instead of on answers.
 - SFT mix limits are shares of **supervised tokens**, not example counts: `AI_MAX_SHARE`
-  (0.25) caps alpaca, `MATH_MAX_SHARE` (0.3) caps synthetic maths and word problems on
+  (0.15) caps alpaca, `MATH_MAX_SHARE` (0.3) caps synthetic maths and word problems on
   top of the chat data. `cap_share` shuffles with a fixed seed before trimming, so the
-  same sources always produce the same mix. See [Data](data.md#sft).
+  same sources always produce the same mix. See [Data](data.md#sft). `sft` also draws
+  `SFT_REPLAY` (0.15) of its microbatches as raw windows from `data/train.bin` with a
+  separate RNG stream, mirroring the format stage — this is what keeps the base
+  distribution (and wikitext/lambada) from collapsing during SFT. Identity-leaky
+  assistant turns are dropped everywhere, including inside multi-turn conversations.
 - SFT masks everything that is not an answer (system header, questions) with labels
   `-100` and pads with the `<eos>` id, because the tokenizer only defines `<eos>` as a
   special token. Multi-turn conversations supervise every assistant turn and close

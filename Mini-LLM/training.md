@@ -44,7 +44,9 @@ Every training detail is given on the command line, never hidden in the code:
   `bytes/token`, and for each source its share of the training tokens and the number of
   passes the run makes over it. It also reports `bits/byte` next to every validation
   loss (loss is in nats/token, so it cannot be compared across tokenizers).
-- `sft` takes `--lr-max`, `--lr-min` and `--warmup`.
+- `sft` takes `--lr-max`, `--lr-min`, `--warmup` and `--replay` (defaults: 1e-4 / 1e-5 /
+  100 / 0.15, all overridable; `cloud/run.sh` spells the same values out via
+  `SFT_LR_MAX`, `SFT_LR_MIN`, `SFT_LR_WARMUP`, `SFT_REPLAY`).
 - The per-size values in `pretrain.py` (`HPARAMS` and the `PRESETS`) are only
   fallbacks; `cloud/run.sh` spells every value out explicitly in the commands it
   launches.
@@ -151,7 +153,9 @@ The 1.0 presets (`34M`, `70M`) are unchanged and their checkpoints still load wi
   pass the older checks, so the lengths are compared too.
 - **Run.** Everything goes through `cloud/run.sh` — see [Cloud GPU](cloud-gpu.md).
   After `train`, `cloud/run.sh midtrain` runs the format stage (see below) and `sft`
-  picks its output automatically; `sft` does 2 epochs (the 70M overfit at epoch 3).
+  picks its output automatically; `sft` does 1 epoch at lr 1e-4 -> 1e-5 with warmup 100
+  and 15 % raw-text replay from `data/train.bin` (the 150M run overfit at 2 epochs and
+  lost 15-25 points on lambada/sciq/piqa without replay).
   `pack` archives
   `models/32k/tok.json`, every base checkpoint of that size (pretrained and format
   stage), the assistant and `data/meta.json` (milestones excluded, `.state.pt`
