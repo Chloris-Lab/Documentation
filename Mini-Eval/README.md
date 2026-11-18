@@ -66,7 +66,7 @@ models are not evaluated.
 See [Workflow](workflow.md) for what each command does, including the regular
 workflow rule: `run` always rebuilds **two reports** from the latest runs —
 `reports/<suite>_private.md` (all models) and `reports/<suite>_public.md`
-(references only) — so a benchmark never ends without images; previous reports go to
+(references plus the Petal release, `public: true` in the registry) — so a benchmark never ends without images; previous reports go to
 `reports/history/<suite>/<date>/` and the interactive `<suite>_private.html` /
 `<suite>_public.html` versions are written alongside. Use `--no-report` to skip it,
 and `report` alone to rebuild from existing results.

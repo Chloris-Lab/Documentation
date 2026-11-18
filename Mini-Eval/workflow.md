@@ -20,7 +20,8 @@ benchmark never ends without images:
 - `reports/<suite>_private.md` (+ `_vs_tokens.png` / `_vs_params.png`, HTML) — every
   registered model, including the mini 150M;
 - `reports/<suite>_public.md` (+ `_vs_tokens.png` / `_vs_params.png`, HTML) — references
-  only, without any mini model.
+  plus the models flagged `public: true` in the registry (the Petal release);
+  mini-llm, its internal alpha, stays private.
 
 The previous report and its plots are moved to
 `reports/history/<suite>/<generation date>/` — no evaluation replaces an older one.
